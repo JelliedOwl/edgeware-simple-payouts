@@ -1,0 +1,9 @@
+chain: "mainnet"
+claimerWallet: "<12 word mnemonic>"
+claimList:
+  - alias: stash1
+    controllerAddress: <5xxx EDG format address>
+    stashAddress: <5xxx EDG format address>
+  - alias: stash2
+    controllerAddress: <5xxx EDG format address>
+    stashAddress: <5xxx EDG format address>
