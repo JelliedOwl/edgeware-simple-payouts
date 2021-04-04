@@ -41,7 +41,7 @@ const claimPayout = async (nodeUrl, cfg) => {
   const activeEra = (await api.query.staking.activeEra()).toJSON().index;
   // console.log(`Era ${activeEra}`);
 
-  const maxBatchedTransactions = 99999;
+  const maxBatchedTransactions = 9;
   const payoutCalls = [];
 
   if (cfg.claimList.length > 0) {
@@ -77,34 +77,28 @@ const claimPayout = async (nodeUrl, cfg) => {
           if (numOfUnclaimedPayouts > maxBatchedTransactions) {
             txLimit = maxBatchedTransactions;
           }
+          sendtx = 0;
           for (let itx = start; itx <= txLimit + start - 1; itx++) {
             // const idx = lastReward + itx;
             const idx = activeEra - MAX_HISTORY - 1 + itx;
             const exposure = await api.query.staking.erasStakersClipped(idx, stashAddress);
             // console.log(`exposure: ${exposure.total.toBn()}`);
             if (exposure.total.toBn() > 0 && !alreadyClaimed.includes(idx)) {
+              sendtx = 1;
               console.log(`Adding claim for ${currentAddress}, era ${idx}`);
               payoutCalls.push(api.tx.staking.payoutStakers(stashAddress, idx));
-              // try {
-              //   console.log('submit tx');
-              //   api.tx.utility
-              //       .batch(payoutCalls)
-              //       .signAndSend(claimerPair);
-              // }
-              // catch (e) {
-              //   console.log(`Could not request claims: ${e}`);
-              // }
-
             }
           }
-          try {
-            console.log('submit tx');
-            api.tx.utility
-                .batch(payoutCalls)
-                .signAndSend(claimerPair);
-          }
-          catch (e) {
-            console.log(`Could not request claim for ${currentAddress}: ${e}`);
+          if (sendtx) {
+            try {
+              console.log('submit tx');
+              await api.tx.utility
+                  .batch(payoutCalls)
+                  .signAndSend(claimerPair);
+            }
+            catch (e) {
+              console.log(`Could not request claim for ${currentAddress}: ${e}`);
+            }
           }
           numOfUnclaimedPayouts -= txLimit;
           start += txLimit;
@@ -114,15 +108,6 @@ const claimPayout = async (nodeUrl, cfg) => {
       }
     }
   }
-  // try {
-  //   console.log('submit tx');
-  //   api.tx.utility
-  //       .batch(payoutCalls)
-  //       .signAndSend(claimerPair);
-  // }
-  // catch (e) {
-  //   console.log(`Could not request claims: ${e}`);
-  // }
 
   process.exit(0);
 };
@@ -144,5 +129,6 @@ if (programOptions.url) {
 
 console.log(`Claiming payout using node at ${url}`);
 claimPayout(url, cfg).then(r => console.log(`Return ${r}`))
+
 
 
