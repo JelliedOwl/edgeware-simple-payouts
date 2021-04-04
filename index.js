@@ -41,7 +41,7 @@ const claimPayout = async (nodeUrl, cfg) => {
   const activeEra = (await api.query.staking.activeEra()).toJSON().index;
   // console.log(`Era ${activeEra}`);
 
-  const maxBatchedTransactions = 9;
+  const maxBatchedTransactions = 9999;
   const payoutCalls = [];
 
   if (cfg.claimList.length > 0) {
@@ -91,6 +91,14 @@ const claimPayout = async (nodeUrl, cfg) => {
               }
             }
           }
+          numOfUnclaimedPayouts -= txLimit;
+          start += txLimit;
+        }
+        console.log(`All payouts have been claimed for ${currentAddress}.`);
+
+      }
+    }
+  }
           if (sendtx) {
             try {
               console.log('submit tx');
@@ -102,14 +110,6 @@ const claimPayout = async (nodeUrl, cfg) => {
               console.log(`Could not request claim for ${currentAddress}: ${e}`);
             }
           }
-          numOfUnclaimedPayouts -= txLimit;
-          start += txLimit;
-        }
-        console.log(`All payouts have been claimed for ${currentAddress}.`);
-
-      }
-    }
-  }
 
   process.exit(0);
 };
