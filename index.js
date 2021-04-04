@@ -81,12 +81,14 @@ const claimPayout = async (nodeUrl, cfg) => {
           for (let itx = start; itx <= txLimit + start - 1; itx++) {
             // const idx = lastReward + itx;
             const idx = activeEra - MAX_HISTORY - 1 + itx;
-            const exposure = await api.query.staking.erasStakersClipped(idx, stashAddress);
-            // console.log(`exposure: ${exposure.total.toBn()}`);
-            if (exposure.total.toBn() > 0 && !alreadyClaimed.includes(idx)) {
-              sendtx = 1;
-              console.log(`Adding claim for ${currentAddress}, era ${idx}`);
-              payoutCalls.push(api.tx.staking.payoutStakers(stashAddress, idx));
+            if (!alreadyClaimed.includes(idx)) { // if claimed, skip the era BEFORE downloading the era list
+              const exposure = await api.query.staking.erasStakersClipped(idx, stashAddress);
+              // console.log(`exposure: ${exposure.total.toBn()}`);
+              if (exposure.total.toBn() > 0) {
+                sendtx = 1;
+                console.log(`Adding claim for ${currentAddress}, era ${idx}`);
+                payoutCalls.push(api.tx.staking.payoutStakers(stashAddress, idx));
+              }
             }
           }
           if (sendtx) {
